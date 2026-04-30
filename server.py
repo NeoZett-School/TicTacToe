@@ -107,12 +107,18 @@ while active:
                     turn = o_player
                     for conn in server.connections.values():
                         conn["socket"].sendall(encode_message("turn", turn="o"))
+                    info = paragraph.render(f"Player o's turn", True, (0, 0, 0))
+                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
                 elif x_player is not None:
                     turn = x_player
                     for conn in server.connections.values():
                         conn["socket"].sendall(encode_message("turn", turn="x"))
+                    info = paragraph.render(f"Player x's turn", True, (0, 0, 0))
+                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
                 else:
                     turn = None
+                    info = paragraph.render(f"Waiting for players...", True, (0, 0, 0))
+                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
                 winner = None
                 board_state = [[None, None, None], [None, None, None], [None, None, None]]
                 update_requested = True
@@ -196,10 +202,20 @@ while active:
                     info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
                     turn = None
                 update_requested = True
+            elif msg_type == "version":
+                if data["version"] != "1.0":
+                    print(f"Client {event.addr} has incompatible version {data['version']}. Disconnecting.")
+                    event.sock.close()
+                    player_count -= 1
         elif event.type == network.CONNECTION_LOST:
             print(f"Client disconnected.")
             server.can_connect = True
             player_count -= 1
+            if player_count <= 0:
+                print("No players connected. Waiting for players...")
+                info = paragraph.render(f"Waiting for players...", True, (0, 0, 0))
+                info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
+                turn = None
         elif event.type == network.SERVER_EXIT:
             print("Server is shutting down.")
             active = False

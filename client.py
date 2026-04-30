@@ -83,13 +83,17 @@ while active:
                 title_rect = title.get_rect(center=(WIDTH // 2, 30))
             elif msg_type == "game_over":
                 winner = data["winner"]
-                if winner is None:
+                if winner == "Draw":
                     info = paragraph.render("Game over! It's a tie!", True, (0, 0, 0))
                 elif winner == name:
                     info = paragraph.render("Game over! You win!", True, (0, 0, 0))
                 else:
                     info = paragraph.render(f"Game over! Player {winner} wins!", True, (0, 0, 0))
                 info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
+            elif msg_type == "version":
+                if data["version"] != "1.0":
+                    print(f"Server has incompatible version {data['version']}. Disconnecting.")
+                    active = False
         elif event.type == network.CONNECTION_LOST:
             print(f"Connection to server lost.")
             active = False
