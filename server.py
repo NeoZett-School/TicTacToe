@@ -34,6 +34,8 @@ while active:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             active = False
+        elif event.type == pygame.MOUSEMOTION:
+            pygame.draw.circle(board, (0, 0, 0), event.pos, 20)
     
     for event in server.get_events():
         if event.type == network.SERVER_START:
