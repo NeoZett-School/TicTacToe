@@ -208,7 +208,6 @@ while active:
                 if data["version"] != VERSION:
                     print(f"Client {event.addr} has incompatible version {data['version']}. Disconnecting.")
                     event.sock.close()
-                    player_count -= 1
         elif event.type == network.CONNECTION_LOST:
             print(f"Client disconnected.")
             server.can_connect = True
