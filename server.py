@@ -213,6 +213,11 @@ while active:
             player_count -= 1
             if player_count <= 0:
                 print("No players connected. Waiting for players...")
+                board.fill((255, 255, 255))
+                board.blit(board_image, (0, 0))
+                winner = None
+                board_state = [[None, None, None], [None, None, None], [None, None, None]]
+                update_requested = True
                 info = paragraph.render(f"Waiting for players...", True, (0, 0, 0))
                 info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
                 turn = None
