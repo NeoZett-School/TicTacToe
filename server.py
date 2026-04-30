@@ -2,6 +2,8 @@ import network
 import socket
 import sys
 
+import pygame
+
 server = network.Server(port=5000)
 server.start()
 

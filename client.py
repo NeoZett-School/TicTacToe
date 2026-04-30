@@ -2,8 +2,10 @@ import network
 import socket
 import sys
 
-client = network.Client(host=socket.gethostname(), port=5000)
-client.connect()
+with open("config.txt", "r") as f:
+    host = f.read().strip()
+    client = network.Client(host=host, port=5000)
+    client.connect()
 
 active = True
 while active:
