@@ -51,6 +51,11 @@ x_image = pygame.transform.scale(x_image, (80, 80))
 o_image = pygame.image.load("assets/o.png").convert_alpha()
 o_image = pygame.transform.scale(o_image, (80, 80))
 
+o_player = None
+x_player = None
+
+turn = None
+
 active = True
 while active:
     delta_time = clock.tick(60.0) / 1000.0
@@ -61,25 +66,45 @@ while active:
     
     for event in server.get_events():
         if event.type == network.SERVER_START:
-            print(f"Server started on {event.sock.getsockname()}")
+            print(f"Server started on {event.addr}")
         elif event.type == network.CONNECTION:
-            print(f"Client connected from {event.sock.getpeername()}")
+            print(f"Client connected from {event.addr}")
             player_count += 1
+            if player_count == 1:
+                o_player = event.addr
+                print("Assigned O to player.")
+                if turn is None:
+                    turn = o_player
+            elif player_count == 2:
+                x_player = event.addr
+                print("Assigned X to player.")
+                if turn is None:
+                    turn = x_player
+                server.can_connect = False
             update_requested = True
         elif event.type == network.MESSAGE:
             msg_type, data = decode_message(event.data)
-            if msg_type == "PLACE":
-                row, column, symbol = data["row"], data["column"], data["symbol"]
-                board_state[row][column] = symbol
+            if msg_type == "place":
+                if turn not in (o_player, x_player):
+                    turn = None
+                    continue
+                if turn != event.addr:
+                    continue
+                row, column = data["row"], data["column"]
                 x = column * (BOARD_SIZE // 3) + (BOARD_SIZE // 6) - 40
                 y = row * (BOARD_SIZE // 3) + (BOARD_SIZE // 6) - 40
-                if symbol == "X":
+                if event.addr == x_player:
                     board.blit(x_image, (x, y))
+                    board_state[row][column] = "X"
+                    turn = o_player
                 else:
                     board.blit(o_image, (x, y))
+                    board_state[row][column] = "O"
+                    turn = x_player
                 update_requested = True
         elif event.type == network.CONNECTION_LOST:
             print(f"Client disconnected.")
+            server.can_connect = True
             player_count -= 1
         elif event.type == network.SERVER_EXIT:
             print("Server is shutting down.")

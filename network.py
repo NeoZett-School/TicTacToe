@@ -3,6 +3,7 @@ from threading import Thread, Lock
 from queue import Queue
 import socket
 import struct
+import time
 
 _events = Queue() # List of events that have occurred in the network
 _events_lock = Lock() # Lock for accessing the _events queue
@@ -20,11 +21,12 @@ def get_events():
 
 class Event:
     __slots__ = (
-        "type", "sock", "data"
+        "type", "addr", "sock", "data"
     )
     get_events = staticmethod(get_events)
-    def __init__(self, *, type, sock, data=None):
+    def __init__(self, *, type, addr, sock, data=None):
         self.type = type
+        self.addr = addr
         self.sock = sock
         self.data = data
     @property
@@ -60,28 +62,33 @@ def unpack(buffer):
 
 class Server:
     __slots__ = (
-        "host", "port", "bufsize", "connections", "thread", "socket", "reuse_port"
+        "host", "port", "reuse_port", "can_connect", "bufsize", "connections", "thread", "socket", "_address"
     )
     get_events = staticmethod(get_events)
     def __init__(self, *, port, reuse_port = False, bufsize = 1024):
         self.host = socket.gethostname()
         self.port = port
         self.reuse_port = reuse_port
+        self.can_connect = True
         self.bufsize = bufsize
         self.connections = {}
         self.thread = Thread(target=self._accept_connections)
     def start(self):
         assert not _initialized.get(), "Cannot create a server after a server or client has already been made"
         _initialized.set(True)
-        _events.put(Event(type=LOADING, sock=None))
+        _events.put(Event(type=LOADING, addr=None, sock=None))
         self.socket = socket.create_server((self.host, self.port), reuse_port=self.reuse_port)
-        _events.put(Event(type=SERVER_START, sock=self.socket))
+        self._address = self.socket.getsockname()
+        _events.put(Event(type=SERVER_START, addr=self._address, sock=self.socket))
         self.thread.start()
     def _accept_connections(self):
         try:
             while True:
+                if not self.can_connect:
+                    time.sleep(0.1)
+                    continue
                 client_socket, address = self.socket.accept()
-                _events.put(Event(type=CONNECTION, sock=client_socket))
+                _events.put(Event(type=CONNECTION, addr=address, sock=client_socket))
                 client_thread = Thread(target=self._handle_client, args=(address, client_socket,))
                 self.connections[address] = {
                     "thread": client_thread,
@@ -90,7 +97,7 @@ class Server:
                 }
                 client_thread.start()
         finally:
-            _events.put(Event(type=SERVER_EXIT, sock=self.socket))
+            _events.put(Event(type=SERVER_EXIT, addr=self._address, sock=self.socket))
     def _handle_client(self, address, client_socket):
         buffer = self.connections[address]["buffer"]
 
@@ -108,19 +115,20 @@ class Server:
                         for message in unpack(buffer):
                             _events.put(Event(
                                 type=MESSAGE,
+                                addr=address,
                                 sock=client_socket,
                                 data=message
                             ))
                     except ConnectionResetError:
-                        _events.put(Event(type=CONNECTION_RESET, sock=client_socket))
+                        _events.put(Event(type=CONNECTION_RESET, addr=address, sock=client_socket))
                         break
         finally:
             del self.connections[address]
-            _events.put(Event(type=CONNECTION_LOST, sock=client_socket))
+            _events.put(Event(type=CONNECTION_LOST, addr=address, sock=client_socket))
 
 class Client:
     __slots__ = (
-        "host", "port", "timeout", "bufsize", "buffer", "thread", "socket"
+        "host", "port", "timeout", "bufsize", "buffer", "thread", "socket", "_address"
     )
     get_events = staticmethod(get_events)
     def __init__(self, *, host, port, timeout=None, bufsize = 1024):
@@ -133,9 +141,10 @@ class Client:
     def connect(self):
         assert not _initialized.get(), "Cannot connect to server after a client or server has already been made"
         _initialized.set(True)
-        _events.put(Event(type=LOADING, sock=None))
+        _events.put(Event(type=LOADING, addr=None, sock=None))
         self.socket = socket.create_connection((self.host, self.port), self.timeout)
-        _events.put(Event(type=CONNECTION, sock=self.socket))
+        self._address = self.socket.getpeername()
+        _events.put(Event(type=CONNECTION, addr=self._address, sock=self.socket))
         self.thread.start()
     def _receive_messages(self):
         try:
@@ -152,11 +161,12 @@ class Client:
                         for message in unpack(self.buffer):
                             _events.put(Event(
                                 type=MESSAGE,
+                                addr=self._address,
                                 sock=self.socket,
                                 data=message
                             ))
                     except ConnectionResetError:
-                        _events.put(Event(type=CONNECTION_RESET, sock=self.socket))
+                        _events.put(Event(type=CONNECTION_RESET, addr=self._address, sock=self.socket))
                         break
         finally:
-            _events.put(Event(type=CONNECTION_LOST, sock=self.socket))
+            _events.put(Event(type=CONNECTION_LOST, addr=self._address, sock=self.socket))

@@ -33,10 +33,11 @@ class Event:
     """The event class represents an event that occurs in the network, such as a message being received or a connection being reset."""
 
     type: int
+    addr: Optional[socket._Address]
     sock: socket.socket
     data: Optional[Any]
 
-    def __init__(self: Self, *, type: int, sock: socket.socket, data: Optional[Any] = None) -> None: ...
+    def __init__(self: Self, *, type: int, addr: Optional[socket._Address], sock: socket.socket, data: Optional[Any] = None) -> None: ...
     @staticmethod
     def get_events() -> Generator[Event, Any, None]: 
         """Returns a list of all events that have occurred in the network.
@@ -56,6 +57,7 @@ class Server:
     host: str
     port: int
     reuse_port: bool
+    can_connect: bool
     bufsize: int
     connections: Dict[socket._Address, Dict[str, Any]]
     thread: Thread
