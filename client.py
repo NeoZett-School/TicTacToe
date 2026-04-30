@@ -1,6 +1,7 @@
 import network
 import socket
 import sys
+import json
 
 from os import environ
 
@@ -8,6 +9,13 @@ environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame
 
 pygame.init()
+
+def encode_message(msg_type: str, **data) -> bytes:
+    payload = {
+        "type": msg_type,
+        "data": data
+    }
+    return network.pack(json.dumps(payload).encode("utf-8"))
 
 WIDTH, HEIGHT = 800, 600
 BOARD_SIZE = 400
@@ -31,6 +39,13 @@ while active:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             active = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                mouse_x, mouse_y = event.pos
+                board_x = (mouse_x - (WIDTH - BOARD_SIZE) // 2) // (BOARD_SIZE // 3)
+                board_y = (mouse_y - (HEIGHT - BOARD_SIZE) // 2) // (BOARD_SIZE // 3)
+                if 0 <= board_x < 3 and 0 <= board_y < 3:
+                    client.send(encode_message("move", row=board_y, column=board_x))
 
     for event in client.get_events():
         if event.type == network.SERVER_START:

@@ -1,6 +1,7 @@
 import network
 import socket
 import sys
+import json
 
 from os import environ
 
@@ -8,6 +9,10 @@ environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame
 
 pygame.init()
+
+def decode_message(data: bytes):
+    payload = json.loads(data.decode())
+    return payload["type"], payload["data"]
 
 WIDTH, HEIGHT = 800, 600
 BOARD_SIZE = 400
@@ -27,12 +32,24 @@ title_rect = title.get_rect(center=(WIDTH // 2, 30))
 
 board = pygame.Surface((BOARD_SIZE, BOARD_SIZE))
 board.fill((255, 255, 255))
+
+board_state = [[None, None, None], [None, None, None], [None, None, None]]
+
 update_requested = True
 
 player_count = 0
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
+
+board_image = pygame.image.load("assets/board.png").convert_alpha()
+board_image = pygame.transform.scale(board_image, (BOARD_SIZE, BOARD_SIZE))
+board.blit(board_image, (0, 0))
+
+x_image = pygame.image.load("assets/x.png").convert_alpha()
+x_image = pygame.transform.scale(x_image, (80, 80))
+o_image = pygame.image.load("assets/o.png").convert_alpha()
+o_image = pygame.transform.scale(o_image, (80, 80))
 
 active = True
 while active:
@@ -41,9 +58,6 @@ while active:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             active = False
-        elif event.type == pygame.MOUSEMOTION:
-            pygame.draw.circle(board, (0, 0, 0), event.pos, 20)
-            update_requested = True
     
     for event in server.get_events():
         if event.type == network.SERVER_START:
@@ -53,7 +67,17 @@ while active:
             player_count += 1
             update_requested = True
         elif event.type == network.MESSAGE:
-            ...
+            msg_type, data = decode_message(event.data)
+            if msg_type == "PLACE":
+                row, column, symbol = data["row"], data["column"], data["symbol"]
+                board_state[row][column] = symbol
+                x = column * (BOARD_SIZE // 3) + (BOARD_SIZE // 6) - 40
+                y = row * (BOARD_SIZE // 3) + (BOARD_SIZE // 6) - 40
+                if symbol == "X":
+                    board.blit(x_image, (x, y))
+                else:
+                    board.blit(o_image, (x, y))
+                update_requested = True
         elif event.type == network.CONNECTION_LOST:
             print(f"Client disconnected.")
             player_count -= 1
