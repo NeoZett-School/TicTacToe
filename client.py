@@ -19,7 +19,7 @@ def encode_message(msg_type: str, **data) -> bytes:
     }
     return network.pack(json.dumps(payload, separators=(",", ":")).encode("utf-8"))
 
-def decode_message(data: bytes):
+def decode_message(data: bytes) -> tuple[str, dict]:
     payload = json.loads(data.decode())
     return payload["type"], payload["data"]
 
@@ -70,8 +70,7 @@ while active:
         elif event.type == network.MESSAGE:
             msg_type, data = decode_message(event.data)
             if msg_type == "board_update":
-                image_bytes = base64.b64encode(data["content"].encode('ascii')) # Fel i din server? Se nedan.
-                # Korrekt sätt att läsa PNG-bytes i Pygame:
+                image_bytes = base64.b64encode(data["content"].encode('ascii'))
                 img_io = io.BytesIO(base64.b64decode(data["content"]))
                 board = pygame.image.load(img_io, "PNG") 
             elif msg_type == "turn":
@@ -80,6 +79,15 @@ while active:
                 info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
             elif msg_type == "player":
                 name = data["name"]
+            elif msg_type == "game_over":
+                winner = data["winner"]
+                if winner is None:
+                    info = paragraph.render("Game over! It's a tie!", True, (0, 0, 0))
+                elif winner == name:
+                    info = paragraph.render("Game over! You win!", True, (0, 0, 0))
+                else:
+                    info = paragraph.render(f"Game over! Player {winner} wins!", True, (0, 0, 0))
+                info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
         elif event.type == network.CONNECTION_LOST:
             print(f"Connection to server lost.")
             active = False
