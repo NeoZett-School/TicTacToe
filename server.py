@@ -51,7 +51,7 @@ while active:
     if update_requested:
         data = pygame.image.tobytes(board, "RGBA")
         for conn in server.connections.values():
-            conn["socket"].sendall(data)
+            conn["socket"].sendall(network.pack(data))
         update_requested = False
     
     screen.fill((255, 255, 255))
