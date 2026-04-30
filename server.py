@@ -2,24 +2,61 @@ import network
 import socket
 import sys
 
+from os import environ
+
+environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame
 
+pygame.init()
+
+WIDTH, HEIGHT = 800, 600
+BOARD_SIZE = 400
+pygame.display.set_caption("TicTacToe - Server")
+pygame.display.set_icon(pygame.image.load("assets/icon.png"))
+
 server = network.Server(port=5000)
+with open("config.txt", "w") as f:
+    f.write(socket.gethostbyname(socket.gethostname()))
+print("Starting server... Remember to share the config.txt file with your clients so they can connect!")
 server.start()
+
+board = pygame.Surface((BOARD_SIZE, BOARD_SIZE))
+board.fill((255, 0, 0))
+board_modified = True
+
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+clock = pygame.time.Clock()
 
 active = True
 while active:
+    delta_time = clock.tick(60.0) / 1000.0
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            active = False
+    
     for event in server.get_events():
         if event.type == network.SERVER_START:
             print(f"Server started on {event.sock.getsockname()}")
         elif event.type == network.CONNECTION:
             print(f"Client connected from {event.sock.getpeername()}")
         elif event.type == network.MESSAGE:
-            print(f"Received message: {event.data.decode('utf-8')} from {event.sock.getpeername()}")
+            ...
         elif event.type == network.CONNECTION_LOST:
             print(f"Client disconnected.")
         elif event.type == network.SERVER_EXIT:
             print("Server is shutting down.")
+    
+    if board_modified:
+        data = pygame.image.tobytes(board, "RGBA")
+        server.socket.sendall(data)
+        board_modified = False
+    
+    screen.fill((255, 255, 255))
+
+    pygame.display.flip()
 
 server.socket.close()
+
+pygame.quit()
 sys.exit()
