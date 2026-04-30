@@ -72,6 +72,8 @@ class Server:
         Returns:
             A list of Event objects representing all events that have occurred in the network.
         """
+    @property
+    def address(self: Self) -> socket._Address: ...
     def start(self: Self) -> None: ...
 
 class Client:
@@ -93,4 +95,6 @@ class Client:
         Returns:
             A list of Event objects representing all events that have occurred in the network.
         """
+    @property
+    def address(self: Self) -> socket._Address: ...
     def connect(self: Self) -> None: ...

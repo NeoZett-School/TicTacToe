@@ -74,6 +74,9 @@ class Server:
         self.bufsize = bufsize
         self.connections = {}
         self.thread = Thread(target=self._accept_connections)
+    @property
+    def address(self):
+        return self._address
     def start(self):
         assert not _initialized.get(), "Cannot create a server after a server or client has already been made"
         _initialized.set(True)
@@ -144,6 +147,9 @@ class Client:
         self.bufsize = bufsize
         self.buffer = bytearray()
         self.thread = Thread(target=self._receive_messages)
+    @property
+    def address(self):
+        return self._address
     def connect(self):
         assert not _initialized.get(), "Cannot connect to server after a client or server has already been made"
         _initialized.set(True)
