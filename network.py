@@ -2,6 +2,7 @@ from contextvars import ContextVar
 from threading import Thread, Lock
 from queue import Queue
 import socket
+import struct
 
 _events = Queue() # List of events that have occurred in the network
 _events_lock = Lock() # Lock for accessing the _events queue
@@ -38,6 +39,25 @@ class Event:
             CONNECTION_LOST: "CONNECTION_LOST"
         }.get(self.type, "UNKNOWN")
 
+def pack(data):
+    length = len(data)
+    return struct.pack("!I", length) + data
+
+def unpack(buffer):
+    while True:
+        if len(buffer) < 4:
+            break  # not enough for length
+
+        length = struct.unpack("!I", buffer[:4])[0]
+
+        if len(buffer) < 4 + length:
+            break  # not enough data yet
+
+        message = buffer[4:4+length]
+        yield bytes(message)
+
+        del buffer[:4+length]  # remove processed message
+
 class Server:
     __slots__ = (
         "host", "port", "bufsize", "connections", "thread", "socket", "reuse_port"
@@ -63,19 +83,35 @@ class Server:
                 client_socket, address = self.socket.accept()
                 _events.put(Event(type=CONNECTION, sock=client_socket))
                 client_thread = Thread(target=self._handle_client, args=(address, client_socket,))
-                self.connections[address] = (client_thread, client_socket)
+                self.connections[address] = {
+                    "thread": client_thread,
+                    "socket": client_socket,
+                    "buffer": bytearray()
+                }
                 client_thread.start()
         finally:
             _events.put(Event(type=SERVER_EXIT, sock=self.socket))
     def _handle_client(self, address, client_socket):
+        buffer = self.connections[address]["buffer"]
+
         try:
             with client_socket:
                 while True:
                     try:
-                        message = client_socket.recv(self.bufsize)
-                        if not message:
-                            continue
-                        _events.put(Event(type=MESSAGE, sock=client_socket, data=message))
+                        chunk = client_socket.recv(self.bufsize)
+
+                        if not chunk:
+                            break  # connection closed properly
+
+                        buffer.extend(chunk)
+
+                        for message in unpack(buffer):
+                            _events.put(Event(
+                                type=MESSAGE,
+                                sock=client_socket,
+                                data=message
+                            ))
+                            buffer.clear()
                     except ConnectionResetError:
                         _events.put(Event(type=CONNECTION_RESET, sock=client_socket))
                         break
@@ -85,7 +121,7 @@ class Server:
 
 class Client:
     __slots__ = (
-        "host", "port", "timeout", "bufsize", "thread", "socket"
+        "host", "port", "timeout", "bufsize", "buffer", "thread", "socket"
     )
     get_events = staticmethod(get_events)
     def __init__(self, *, host, port, timeout=None, bufsize = 1024):
@@ -93,6 +129,7 @@ class Client:
         self.port = port
         self.timeout = timeout
         self.bufsize = bufsize
+        self.buffer = bytearray()
         self.thread = Thread(target=self._receive_messages)
     def connect(self):
         assert not _initialized.get(), "Cannot connect to server after a client or server has already been made"
@@ -106,10 +143,20 @@ class Client:
             with self.socket:
                 while True:
                     try:
-                        message = self.socket.recv(self.bufsize)
-                        if not message:
-                            continue
-                        _events.put(Event(type=MESSAGE, sock=self.socket, data=message))
+                        chunk = self.socket.recv(self.bufsize)
+
+                        if not chunk:
+                            break
+
+                        self.buffer.extend(chunk)
+
+                        for message in unpack(self.buffer):
+                            _events.put(Event(
+                                type=MESSAGE,
+                                sock=self.socket,
+                                data=message
+                            ))
+                            self.buffer.clear() # clear buffer after processing messages to prevent memory bloat
                     except ConnectionResetError:
                         _events.put(Event(type=CONNECTION_RESET, sock=self.socket))
                         break

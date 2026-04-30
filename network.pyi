@@ -13,7 +13,7 @@ or a connection being reset. The get_events
 function returns a list of all events that 
 have occurred in the network."""
 
-from typing import Optional, Generator, Tuple, Dict, Self, Any
+from typing import Optional, Generator, List, Tuple, Dict, Self, Any
 from threading import Thread
 import socket
 
@@ -47,6 +47,9 @@ class Event:
     @property
     def type_name(self: Self) -> str: ...
 
+def pack(data: bytes) -> bytes: ...
+def unpack(buffer: bytearray) -> Generator[bytes, Any, None]: ...
+
 class Server:
     """The Server class represents a server that listens for incoming connections and handles them in separate threads."""
 
@@ -54,7 +57,7 @@ class Server:
     port: int
     reuse_port: bool
     bufsize: int
-    connections: Dict[socket._Address, Tuple[Thread, socket.socket]]
+    connections: Dict[socket._Address, Dict[str, Any]]
     thread: Thread
     socket: socket.socket
 
@@ -75,6 +78,7 @@ class Client:
     port: int
     timeout: Optional[float]
     bufsize: int
+    buffer: bytearray
     thread: Thread
     socket: socket.socket
 

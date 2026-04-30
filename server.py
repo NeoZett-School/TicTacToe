@@ -22,7 +22,7 @@ server.start()
 
 board = pygame.Surface((BOARD_SIZE, BOARD_SIZE))
 board.fill((255, 0, 0))
-board_modified = True
+update_requested = True
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
@@ -40,6 +40,7 @@ while active:
             print(f"Server started on {event.sock.getsockname()}")
         elif event.type == network.CONNECTION:
             print(f"Client connected from {event.sock.getpeername()}")
+            update_requested = True
         elif event.type == network.MESSAGE:
             ...
         elif event.type == network.CONNECTION_LOST:
@@ -47,10 +48,11 @@ while active:
         elif event.type == network.SERVER_EXIT:
             print("Server is shutting down.")
     
-    if board_modified:
+    if update_requested:
         data = pygame.image.tobytes(board, "RGBA")
-        server.socket.sendall(data)
-        board_modified = False
+        for conn in server.connections.values():
+            conn["socket"].sendall(data)
+        update_requested = False
     
     screen.fill((255, 255, 255))
 
