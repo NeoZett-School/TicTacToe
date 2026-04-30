@@ -54,6 +54,8 @@ while active:
     
     screen.fill((255, 255, 255))
 
+    screen.blit(board, board.get_rect(center=(WIDTH // 2, HEIGHT // 2)))
+
     pygame.display.flip()
 
 server.socket.close()
