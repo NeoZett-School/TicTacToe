@@ -98,3 +98,6 @@ class Client:
     @property
     def address(self: Self) -> socket._Address: ...
     def connect(self: Self) -> None: ...
+
+def reset() -> None:
+    """Resets the network state, allowing for a new server or client to be created."""

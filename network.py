@@ -185,3 +185,5 @@ class Client:
                         break
         finally:
             _events.put(Event(type=CONNECTION_LOST, addr=self._address, sock=self.socket))
+
+reset = _initialized.reset
