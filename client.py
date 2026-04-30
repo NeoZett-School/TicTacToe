@@ -34,8 +34,6 @@ with open("config.txt", "r") as f:
     client = network.Client(host=host, port=5000)
     client.connect()
 
-client.socket.sendall(encode_message("version", version=VERSION))
-
 header = pygame.font.SysFont("Georgia", 24)
 paragraph = pygame.font.SysFont("Georgia", 18)
 
@@ -68,8 +66,9 @@ while active:
                     client.socket.sendall(encode_message("place", row=board_y, column=board_x))
 
     for event in client.get_events():
-        if event.type == network.SERVER_START:
-            print(f"Server started on {event.sock.getsockname()}")
+        if event.type == network.CONNECTION:
+            print(f"Connected to server at {event.addr}")
+            client.socket.sendall(encode_message("version", version=VERSION))
         elif event.type == network.MESSAGE:
             msg_type, data = decode_message(event.data)
             if msg_type == "board_update":
