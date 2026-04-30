@@ -20,9 +20,16 @@ with open("config.txt", "w") as f:
 print("Starting server... Remember to share the config.txt file with your clients so they can connect!")
 server.start()
 
+font = pygame.font.SysFont("Georgia", 24)
+
+title = font.render("TicTacToe - Server", True, (0, 0, 0))
+title_rect = title.get_rect(center=(WIDTH // 2, 30))
+
 board = pygame.Surface((BOARD_SIZE, BOARD_SIZE))
 board.fill((255, 255, 255))
 update_requested = True
+
+player_count = 0
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
@@ -36,17 +43,20 @@ while active:
             active = False
         elif event.type == pygame.MOUSEMOTION:
             pygame.draw.circle(board, (0, 0, 0), event.pos, 20)
+            update_requested = True
     
     for event in server.get_events():
         if event.type == network.SERVER_START:
             print(f"Server started on {event.sock.getsockname()}")
         elif event.type == network.CONNECTION:
             print(f"Client connected from {event.sock.getpeername()}")
+            player_count += 1
             update_requested = True
         elif event.type == network.MESSAGE:
             ...
         elif event.type == network.CONNECTION_LOST:
             print(f"Client disconnected.")
+            player_count -= 1
         elif event.type == network.SERVER_EXIT:
             print("Server is shutting down.")
             active = False
@@ -59,6 +69,7 @@ while active:
     
     screen.fill((255, 255, 255))
 
+    screen.blit(title, title_rect)
     screen.blit(board, board.get_rect(center=(WIDTH // 2, HEIGHT // 2)))
 
     pygame.display.flip()

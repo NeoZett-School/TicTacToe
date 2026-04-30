@@ -11,7 +11,7 @@ pygame.init()
 
 WIDTH, HEIGHT = 800, 600
 BOARD_SIZE = 400
-pygame.display.set_caption("TicTacToe - Server")
+pygame.display.set_caption("TicTacToe - Client")
 pygame.display.set_icon(pygame.image.load("assets/icon.png"))
 
 with open("config.txt", "r") as f:
