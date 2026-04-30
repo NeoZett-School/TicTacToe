@@ -79,6 +79,8 @@ while active:
                 info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
             elif msg_type == "player":
                 name = data["name"]
+                title = header.render(f"TicTacToe - Player {name}", True, (0, 0, 0))
+                title_rect = title.get_rect(center=(WIDTH // 2, 30))
             elif msg_type == "game_over":
                 winner = data["winner"]
                 if winner is None:
