@@ -2,6 +2,8 @@ import network
 import socket
 import sys
 import json
+import io
+import base64
 
 from os import environ
 
@@ -9,6 +11,13 @@ environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame
 
 pygame.init()
+
+def encode_message(msg_type: str, **data) -> bytes:
+    payload = {
+        "type": msg_type,
+        "data": data
+    }
+    return network.pack(json.dumps(payload, separators=(",", ":")).encode("utf-8"))
 
 def decode_message(data: bytes):
     payload = json.loads(data.decode())
@@ -25,10 +34,14 @@ with open("config.txt", "w") as f:
 print("Starting server... Remember to share the config.txt file with your clients so they can connect!")
 server.start()
 
-font = pygame.font.SysFont("Georgia", 24)
+header = pygame.font.SysFont("Georgia", 24)
+paragraph = pygame.font.SysFont("Georgia", 18)
 
-title = font.render("TicTacToe - Server", True, (0, 0, 0))
+title = header.render("TicTacToe - Server", True, (0, 0, 0))
 title_rect = title.get_rect(center=(WIDTH // 2, 30))
+
+info = paragraph.render("Waiting for players...", True, (0, 0, 0))
+info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
 
 board = pygame.Surface((BOARD_SIZE, BOARD_SIZE))
 board.fill((255, 255, 255))
@@ -72,15 +85,29 @@ while active:
             player_count += 1
             if player_count == 1:
                 o_player = event.addr
+                event.sock.sendall(encode_message("player", name="o"))
                 print("Assigned O to player.")
                 if turn is None:
                     turn = o_player
+                    for conn in server.connections.values():
+                        conn["socket"].sendall(encode_message("turn", turn="o"))
+                    info = paragraph.render(f"Player o's turn", True, (0, 0, 0))
+                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
             elif player_count == 2:
                 x_player = event.addr
+                event.sock.sendall(encode_message("player", name="x"))
                 print("Assigned X to player.")
                 if turn is None:
                     turn = x_player
+                    for conn in server.connections.values():
+                        conn["socket"].sendall(encode_message("turn", turn="x"))
+                    info = paragraph.render(f"Player x's turn", True, (0, 0, 0))
+                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
                 server.can_connect = False
+            else:
+                print("Too many players connected. Disconnecting client.")
+                event.sock.close()
+                player_count -= 1
             update_requested = True
         elif event.type == network.MESSAGE:
             msg_type, data = decode_message(event.data)
@@ -96,10 +123,18 @@ while active:
                 if event.addr == x_player:
                     board.blit(x_image, (x, y))
                     board_state[row][column] = "X"
+                    for conn in server.connections.values():
+                        conn["socket"].sendall(encode_message("turn", turn="o"))
+                    info = paragraph.render(f"Player o's turn", True, (0, 0, 0))
+                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
                     turn = o_player
                 else:
                     board.blit(o_image, (x, y))
                     board_state[row][column] = "O"
+                    for conn in server.connections.values():
+                        conn["socket"].sendall(encode_message("turn", turn="x"))
+                    info = paragraph.render(f"Player x's turn", True, (0, 0, 0))
+                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
                     turn = x_player
                 update_requested = True
         elif event.type == network.CONNECTION_LOST:
@@ -111,14 +146,18 @@ while active:
             active = False
     
     if update_requested:
-        data = pygame.image.tobytes(board, "RGBA")
+        buffer = io.BytesIO()
+        pygame.image.save(board, buffer, "PNG")
+        data = buffer.getvalue()
+        content_b64 = base64.b64encode(data).decode('ascii')
         for conn in server.connections.values():
-            conn["socket"].sendall(network.pack(data))
+            conn["socket"].sendall(encode_message("board_update", content=content_b64))
         update_requested = False
     
     screen.fill((255, 255, 255))
 
     screen.blit(title, title_rect)
+    screen.blit(info, info_rect)
     screen.blit(board, board.get_rect(center=(WIDTH // 2, HEIGHT // 2)))
 
     pygame.display.flip()
