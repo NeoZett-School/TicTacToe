@@ -13,14 +13,15 @@ or a connection being reset. The get_events
 function returns a list of all events that 
 have occurred in the network."""
 
-from typing import Optional, Generator, List, Tuple, Dict, Self, Any
+from typing import Optional, Generator, Dict, Self, Any
 from threading import Thread
 import socket
 
 LOADING, MESSAGE, SERVER_START, \
 SERVER_EXIT, CONNECTION_RESET, \
-CONNECTION, CONNECTION_LOST \
-= range(7)
+CONNECTION, CONNECTION_LOST, \
+EXCEPTION \
+= range(8)
 
 def get_events() -> Generator[Event, Any, None]: 
     """Returns a list of all events that have occurred in the network.

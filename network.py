@@ -11,8 +11,9 @@ _initialized = ContextVar("_initialized", default=False)  # Whether a server or 
 
 LOADING, MESSAGE, SERVER_START, \
 SERVER_EXIT, CONNECTION_RESET, \
-CONNECTION, CONNECTION_LOST \
-= range(7)
+CONNECTION, CONNECTION_LOST, \
+EXCEPTION \
+= range(8)
 
 def get_events():
     with _events_lock:
@@ -122,6 +123,9 @@ class Server:
                     except ConnectionResetError:
                         _events.put(Event(type=CONNECTION_RESET, addr=address, sock=client_socket))
                         break
+                    except Exception as e:
+                        _events.put(Event(type=EXCEPTION, addr=address, sock=client_socket, data=e))
+                        break
         finally:
             del self.connections[address]
             _events.put(Event(type=CONNECTION_LOST, addr=address, sock=client_socket))
@@ -167,6 +171,9 @@ class Client:
                             ))
                     except ConnectionResetError:
                         _events.put(Event(type=CONNECTION_RESET, addr=self._address, sock=self.socket))
+                        break
+                    except Exception as e:
+                        _events.put(Event(type=EXCEPTION, addr=self._address, sock=self.socket, data=e))
                         break
         finally:
             _events.put(Event(type=CONNECTION_LOST, addr=self._address, sock=self.socket))
