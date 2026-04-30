@@ -1,12 +1,11 @@
 from contextvars import ContextVar
-from threading import Thread, Lock
+from threading import Thread
 from queue import Queue
 import socket
 import struct
 import time
 
 _events = Queue() # List of events that have occurred in the network
-_events_lock = Lock() # Lock for accessing the _events queue
 _initialized = ContextVar("_initialized", default=False)  # Whether a server or client has been initialized
 
 LOADING, MESSAGE, SERVER_START, \
@@ -16,9 +15,8 @@ EXCEPTION \
 = range(8)
 
 def get_events():
-    with _events_lock:
-        while not _events.empty():
-            yield _events.get()
+    while not _events.empty():
+        yield _events.get()
 
 class Event:
     __slots__ = (
