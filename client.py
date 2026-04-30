@@ -25,6 +25,7 @@ def decode_message(data: bytes) -> tuple[str, dict]:
 
 WIDTH, HEIGHT = 800, 600
 BOARD_SIZE = 400
+VERSION = "1.0"
 pygame.display.set_caption("TicTacToe - Client")
 pygame.display.set_icon(pygame.image.load("assets/icon.png"))
 
@@ -32,6 +33,8 @@ with open("config.txt", "r") as f:
     host = f.read().strip()
     client = network.Client(host=host, port=5000)
     client.connect()
+
+client.socket.sendall(encode_message("version", version=VERSION))
 
 header = pygame.font.SysFont("Georgia", 24)
 paragraph = pygame.font.SysFont("Georgia", 18)
@@ -91,7 +94,7 @@ while active:
                     info = paragraph.render(f"Game over! Player {winner} wins!", True, (0, 0, 0))
                 info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
             elif msg_type == "version":
-                if data["version"] != "1.0":
+                if data["version"] != VERSION:
                     print(f"Server has incompatible version {data['version']}. Disconnecting.")
                     active = False
         elif event.type == network.CONNECTION_LOST:

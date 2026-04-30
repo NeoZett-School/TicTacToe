@@ -46,6 +46,7 @@ def check_winner(state: str) -> str | None:
 
 WIDTH, HEIGHT = 800, 600
 BOARD_SIZE = 400
+VERSION = "1.0"
 pygame.display.set_caption("TicTacToe - Server")
 pygame.display.set_icon(pygame.image.load("assets/icon.png"))
 
@@ -128,6 +129,7 @@ while active:
             print(f"Server started on {event.addr}")
         elif event.type == network.CONNECTION:
             print(f"Client connected from {event.addr}")
+            event.sock.sendall(encode_message("version", version=VERSION))
             player_count += 1
             if player_count == 1:
                 o_player = event.addr
@@ -203,7 +205,7 @@ while active:
                     turn = None
                 update_requested = True
             elif msg_type == "version":
-                if data["version"] != "1.0":
+                if data["version"] != VERSION:
                     print(f"Client {event.addr} has incompatible version {data['version']}. Disconnecting.")
                     event.sock.close()
                     player_count -= 1
