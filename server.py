@@ -21,7 +21,7 @@ print("Starting server... Remember to share the config.txt file with your client
 server.start()
 
 board = pygame.Surface((BOARD_SIZE, BOARD_SIZE))
-board.fill((255, 0, 0))
+board.fill((255, 255, 255))
 update_requested = True
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -47,6 +47,7 @@ while active:
             print(f"Client disconnected.")
         elif event.type == network.SERVER_EXIT:
             print("Server is shutting down.")
+            active = False
     
     if update_requested:
         data = pygame.image.tobytes(board, "RGBA")

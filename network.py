@@ -111,7 +111,6 @@ class Server:
                                 sock=client_socket,
                                 data=message
                             ))
-                            buffer.clear()
                     except ConnectionResetError:
                         _events.put(Event(type=CONNECTION_RESET, sock=client_socket))
                         break
@@ -156,7 +155,6 @@ class Client:
                                 sock=self.socket,
                                 data=message
                             ))
-                            self.buffer.clear() # clear buffer after processing messages to prevent memory bloat
                     except ConnectionResetError:
                         _events.put(Event(type=CONNECTION_RESET, sock=self.socket))
                         break
