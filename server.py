@@ -157,7 +157,6 @@ while active:
             else:
                 print("Too many players connected. Disconnecting client.")
                 event.sock.close()
-                player_count -= 1
             update_requested = True
         elif event.type == network.MESSAGE:
             msg_type, data = decode_message(event.data)
