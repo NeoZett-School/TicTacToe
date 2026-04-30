@@ -97,6 +97,8 @@ class Server:
                     "buffer": bytearray()
                 }
                 client_thread.start()
+        except Exception as e:
+            _events.put(Event(type=EXCEPTION, addr=self._address, sock=self.socket, data=e))
         finally:
             _events.put(Event(type=SERVER_EXIT, addr=self._address, sock=self.socket))
     def _handle_client(self, address, client_socket):
