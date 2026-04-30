@@ -72,7 +72,6 @@ while active:
         elif event.type == network.MESSAGE:
             msg_type, data = decode_message(event.data)
             if msg_type == "board_update":
-                image_bytes = base64.b64encode(data["content"].encode('ascii'))
                 img_io = io.BytesIO(base64.b64decode(data["content"]))
                 board = pygame.image.load(img_io, "PNG") 
             elif msg_type == "turn":

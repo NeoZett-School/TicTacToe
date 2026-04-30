@@ -167,6 +167,10 @@ while active:
                 if turn != event.addr:
                     continue
                 row, column = data["row"], data["column"]
+                if not (isinstance(row, int) and isinstance(column, int)):
+                    continue
+                if not (0 <= row < 3 and 0 <= column < 3):
+                    continue
                 x = column * (BOARD_SIZE // 3) + (BOARD_SIZE // 6) - 40
                 y = row * (BOARD_SIZE // 3) + (BOARD_SIZE // 6) - 40
                 if board_state[row][column] is not None:
