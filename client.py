@@ -18,6 +18,9 @@ log = open(log_file, "a", buffering = 1)
 sys.stdout = log
 sys.stderr = log
 
+with open(log_file, "a") as f:
+    f.write("\n--- APPLICATION STARTED ---\n")
+
 set_appid("PythonGame.TicTacToe.Client.1.0")  # Set a unique AppID for Windows taskbar grouping
 enable_traceback(log_file)
 
