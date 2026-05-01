@@ -9,7 +9,8 @@ set "PY_W=%PYTHON_PATH:.exe=w.exe%"
 echo Installing requirements...
 "%PYTHON_PATH%" -m pip install -r requirements.txt
 echo Starting program...
-start "" "%PY_W%" server.py > log.txt 2>&1
+start "" "%PY_W%" server.py 
+::> log.txt 2>&1 :: Redirect output to log.txt, uncomment if needed
 
 if errorlevel 1 (
     echo An error occurred while running the server.
