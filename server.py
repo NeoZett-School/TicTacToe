@@ -45,6 +45,7 @@ def check_winner(state: str) -> str | None:
     return "Draw"
 
 WIDTH, HEIGHT = 800, 600
+PORT = 5000
 BOARD_SIZE = 400
 VERSION = "1.0"
 PIECE_CAP = 3
@@ -53,9 +54,8 @@ pygame.display.set_caption("TicTacToe - Server")
 pygame.display.set_icon(pygame.image.load("assets/icon.png"))
 
 server = network.Server(port=5000)
-with open("config.txt", "w") as f:
-    f.write(socket.gethostbyname(socket.gethostname()))
-print("Starting server... Remember to share the config.txt file with your clients so they can connect!")
+json.dump({"host": socket.gethostbyname(socket.gethostname()), "port": PORT}, open("config.json", "w"), separators=(",", ":"))
+print("Starting server... Remember to share the config.json file with your clients so they can connect!")
 server.start()
 
 header = pygame.font.SysFont("Georgia", 24)

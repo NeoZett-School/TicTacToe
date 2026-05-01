@@ -29,10 +29,9 @@ VERSION = "1.0"
 pygame.display.set_caption("TicTacToe - Client")
 pygame.display.set_icon(pygame.image.load("assets/icon.png"))
 
-with open("config.txt", "r") as f:
-    host = f.read().strip()
-    client = network.Client(host=host, port=5000)
-    client.connect()
+config = json.load(open("config.json"))
+client = network.Client(host=config["host"], port=config["port"])
+client.connect()
 
 header = pygame.font.SysFont("Georgia", 24)
 paragraph = pygame.font.SysFont("Georgia", 18)
