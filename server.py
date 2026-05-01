@@ -317,7 +317,7 @@ while active:
                 BOARD_SIZE // 3,
                 BOARD_SIZE // 3
             )
-            pygame.draw.rect(screen, (200, 200, 255), move_rect, 3)
+            pygame.draw.rect(screen, (200, 200, 255), move_rect, 3, 8)
         elif turn == x_player and len(x_moves) >= max_pieces:
             row, col = x_moves[index]
             move_rect = pygame.Rect(
@@ -326,7 +326,7 @@ while active:
                 BOARD_SIZE // 3,
                 BOARD_SIZE // 3
             )
-            pygame.draw.rect(screen, (255, 200, 200), move_rect, 3)
+            pygame.draw.rect(screen, (255, 200, 200), move_rect, 3, 8)
 
     pygame.display.flip()
 

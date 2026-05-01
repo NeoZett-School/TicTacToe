@@ -132,7 +132,7 @@ while active:
             BOARD_SIZE // 3,
             BOARD_SIZE // 3
         )
-        pygame.draw.rect(screen, (200, 200, 255) if name == "o" else (255, 200, 200), move_rect, 3)
+        pygame.draw.rect(screen, (200, 200, 255) if name == "o" else (255, 200, 200), move_rect, 3, 8)
 
     pygame.display.flip()
 
