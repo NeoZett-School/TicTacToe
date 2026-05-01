@@ -157,7 +157,7 @@ class Client:
         _initialized.set(True)
         _events.put(Event(type=LOADING, addr=None, sock=None))
         self.socket = socket.create_connection((self.host, self.port), self.timeout)
-        self._address = self.socket.getpeername()
+        self._address = self.socket.getsockname()
         _events.put(Event(type=CONNECTION, addr=self._address, sock=self.socket))
         self.thread.start()
     def _receive_messages(self):

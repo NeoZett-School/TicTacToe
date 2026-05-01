@@ -76,7 +76,7 @@ while active:
         elif event.type == network.CONNECTION:
             print(f"Connected to server at {event.addr}")
             client.socket.sendall(encode_message("version", version=VERSION))
-            connection_status = paragraph2.render(f"This address {client.address} - Server address {client.socket.getsockname()}", True, (0, 0, 0))
+            connection_status = paragraph2.render(f"This address {client.address} - Server address {client.socket.getpeername()}", True, (0, 0, 0))
             connection_status_rect = connection_status.get_rect(center=(WIDTH // 2, HEIGHT - 10))
         elif event.type == network.MESSAGE:
             msg_type, data = decode_message(event.data)
