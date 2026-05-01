@@ -11,3 +11,7 @@ To connect to this server, simply open the 'client_client.bat' file.
 Each batch file will show a console window for debugging purposes that 
 will be hidden once the application gets started. When the application 
 loads in, you should find a board and information over how to play.
+
+In case you want a modified experience, you can find gamerules and settings 
+in the server configurationfile, called 'server_config.json' and you may 
+also change the port in here as well.
