@@ -89,7 +89,7 @@ while active:
             connection_status = paragraph2.render("Connecting...", True, (0, 0, 0))
             connection_status_rect = connection_status.get_rect(center=(WIDTH // 2, HEIGHT - 10))
         elif event.type == network.CONNECTION:
-            print(f"Connected to server at {event.addr}")
+            print(f"Connected to server at {event.addr}", flush=True)
             client.socket.sendall(encode_message("version", version=VERSION))
             connection_status = paragraph2.render(f"This address {client.address} - Server address {client.socket.getpeername()}", True, (0, 0, 0))
             connection_status_rect = connection_status.get_rect(center=(WIDTH // 2, HEIGHT - 10))
@@ -122,10 +122,10 @@ while active:
                 move = None
             elif msg_type == "version":
                 if data["version"] != VERSION:
-                    print(f"Server has incompatible version {data['version']}. Disconnecting.")
+                    print(f"Server has incompatible version {data['version']}. Disconnecting.", flush=True)
                     active = False
         elif event.type == network.CONNECTION_LOST:
-            print(f"Connection to server lost.")
+            print(f"Connection to server lost.", flush=True)
             active = False
     
     screen.fill((255, 255, 255))

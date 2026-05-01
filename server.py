@@ -73,7 +73,7 @@ pieces_limited = config.get("pieces_limited", True)
 
 server = network.Server(port=config["port"])
 json.dump({"host": socket.gethostbyname(socket.gethostname()), "port": PORT}, open("client_config.json", "w"), separators=(",", ":"))
-print("Starting server... Remember to share the client_config.json file with your clients so they can connect!")
+print("Starting server... Remember to share the client_config.json file with your clients so they can connect!", flush=True)
 server.start()
 
 header = pygame.font.SysFont("Georgia", 24)
@@ -162,17 +162,17 @@ while active:
             connection_status = paragraph2.render("Starting...", True, (0, 0, 0))
             connection_status_rect = connection_status.get_rect(center=(WIDTH // 2, HEIGHT - 10))
         elif event.type == network.SERVER_START:
-            print(f"Server started on {event.addr}")
+            print(f"Server started on {event.addr}", flush=True)
             connection_status = paragraph2.render(f"Address {server.address} - {player_count} player(s)", True, (0, 0, 0))
             connection_status_rect = connection_status.get_rect(center=(WIDTH // 2, HEIGHT - 10))
         elif event.type == network.CONNECTION:
-            print(f"Client connected from {event.addr}")
+            print(f"Client connected from {event.addr}", flush=True)
             event.sock.sendall(encode_message("version", version=VERSION))
             player_count += 1
             if player_count == 1 or (player_count == 2 and not o_player in server.connections):
                 o_player = event.addr
                 event.sock.sendall(encode_message("player", name="o"))
-                print("Assigned O to player.")
+                print("Assigned O to player.", flush=True)
                 if turn is None or not turn in server.connections:
                     turn = o_player
                     for conn in list(server.connections.values()):
@@ -184,7 +184,7 @@ while active:
             elif player_count == 2:
                 x_player = event.addr
                 event.sock.sendall(encode_message("player", name="x"))
-                print("Assigned X to player.")
+                print("Assigned X to player.", flush=True)
                 if turn is None or not turn in server.connections:
                     turn = x_player
                     for conn in list(server.connections.values()):
@@ -195,7 +195,7 @@ while active:
                 event.sock.sendall(encode_message("turn", turn="x" if turn is x_player else "o", move=x_moves[index] if pieces_limited and len(x_moves) >= max_pieces and turn is x_player else None))
                 server.can_connect = False
             else:
-                print("Too many players connected. Disconnecting client.")
+                print("Too many players connected. Disconnecting client.", flush=True)
                 event.sock.close()
             connection_status = paragraph2.render(f"Address {server.address} - {player_count} player(s)", True, (0, 0, 0))
             connection_status_rect = connection_status.get_rect(center=(WIDTH // 2, HEIGHT - 10))
@@ -278,14 +278,14 @@ while active:
                 update_requested = True
             elif msg_type == "version":
                 if data["version"] != VERSION:
-                    print(f"Client {event.addr} has incompatible version {data['version']}. Disconnecting.")
+                    print(f"Client {event.addr} has incompatible version {data['version']}. Disconnecting.", flush=True)
                     event.sock.close()
         elif event.type == network.CONNECTION_LOST:
-            print(f"Client disconnected.")
+            print(f"Client disconnected.", flush=True)
             server.can_connect = True
             player_count -= 1
             if player_count <= 0:
-                print("No players connected. Waiting for players...")
+                print("No players connected. Waiting for players...", flush=True)
                 board.fill((255, 255, 255))
                 board.blit(board_image, (0, 0))
                 winner = None
@@ -299,7 +299,7 @@ while active:
             connection_status = paragraph2.render(f"Address {server.address} - {player_count} player(s)", True, (0, 0, 0))
             connection_status_rect = connection_status.get_rect(center=(WIDTH // 2, HEIGHT - 10))
         elif event.type == network.SERVER_EXIT:
-            print("Server is shutting down.")
+            print("Server is shutting down.", flush=True)
             active = False
     
     if update_requested:
