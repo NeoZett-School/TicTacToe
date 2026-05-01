@@ -5,6 +5,18 @@ import json
 import io
 import base64
 
+import ctypes
+import os
+
+# Create a unique ID for your app (Format: CompanyName.ProductName.SubProduct.Version)
+myappid = 'MyCompany.TicTacToe.Client.1.0' 
+
+try:
+    # This informs Windows that this process has a specific AppID
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+except Exception as e:
+    print(f"AppID could not be set: {e}")
+
 from os import environ
 
 environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
