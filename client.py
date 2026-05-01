@@ -53,6 +53,7 @@ connection_status = paragraph2.render("Loading...", True, (0, 0, 0))
 connection_status_rect = connection_status.get_rect(center=(WIDTH // 2, HEIGHT - 10))
 
 name = "[Loading...]"
+move = None
 
 board = pygame.Surface((BOARD_SIZE, BOARD_SIZE))
 
@@ -92,6 +93,10 @@ while active:
                 turn = data["turn"]
                 info = paragraph.render(f"Player {turn}'s turn" if turn != name else f"It is your turn to place your '{name}'", True, (0, 0, 0))
                 info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
+                if turn == name:
+                    move = data.get("move", None)
+                else:
+                    move = None
             elif msg_type == "player":
                 name = data["name"]
                 title = header.render(f"TicTacToe - Player {name}", True, (0, 0, 0))
@@ -105,6 +110,7 @@ while active:
                 else:
                     info = paragraph.render(f"Game over! Player {winner} wins!", True, (0, 0, 0))
                 info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
+                move = None
             elif msg_type == "version":
                 if data["version"] != VERSION:
                     print(f"Server has incompatible version {data['version']}. Disconnecting.")
@@ -119,6 +125,14 @@ while active:
     screen.blit(info, info_rect)
     screen.blit(connection_status, connection_status_rect)
     screen.blit(board, board.get_rect(center=(WIDTH // 2, HEIGHT // 2)))
+    if move is not None:
+        move_rect = pygame.Rect(
+            (WIDTH - BOARD_SIZE) // 2 + move[1] * (BOARD_SIZE // 3),
+            (HEIGHT - BOARD_SIZE) // 2 + move[0] * (BOARD_SIZE // 3),
+            BOARD_SIZE // 3,
+            BOARD_SIZE // 3
+        )
+        pygame.draw.rect(screen, (200, 200, 255) if name == "o" else (255, 200, 200), move_rect, 3)
 
     pygame.display.flip()
 

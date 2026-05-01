@@ -127,14 +127,14 @@ while active:
                     turn = o_player
                     for conn in list(server.connections.values()):
                         if not conn["alive"]: continue
-                        conn["socket"].sendall(encode_message("turn", turn="o"))
+                        conn["socket"].sendall(encode_message("turn", turn="o", move=None))
                     info = paragraph.render(f"Player o's turn", True, (0, 0, 0))
                     info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
                 elif x_player is not None:
                     turn = x_player
                     for conn in list(server.connections.values()):
                         if not conn["alive"]: continue
-                        conn["socket"].sendall(encode_message("turn", turn="x"))
+                        conn["socket"].sendall(encode_message("turn", turn="x", move=None))
                     info = paragraph.render(f"Player x's turn", True, (0, 0, 0))
                     info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
                 else:
@@ -170,7 +170,7 @@ while active:
                         conn["socket"].sendall(encode_message("turn", turn="o"))
                     info = paragraph.render(f"Player o's turn", True, (0, 0, 0))
                     info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
-                event.sock.sendall(encode_message("turn", turn="o" if turn is o_player else "x"))
+                event.sock.sendall(encode_message("turn", turn="o" if turn is o_player else "x", move=o_moves[index] if pieces_limited and len(o_moves) >= max_pieces and turn is o_player else None))
             elif player_count == 2:
                 x_player = event.addr
                 event.sock.sendall(encode_message("player", name="x"))
@@ -182,7 +182,7 @@ while active:
                         conn["socket"].sendall(encode_message("turn", turn="x"))
                     info = paragraph.render(f"Player x's turn", True, (0, 0, 0))
                     info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
-                event.sock.sendall(encode_message("turn", turn="x" if turn is x_player else "o"))
+                event.sock.sendall(encode_message("turn", turn="x" if turn is x_player else "o", move=x_moves[index] if pieces_limited and len(x_moves) >= max_pieces and turn is x_player else None))
                 server.can_connect = False
             else:
                 print("Too many players connected. Disconnecting client.")
@@ -212,8 +212,10 @@ while active:
                     try:
                         if event.addr == x_player:
                             index = x_moves.index((row, column))
+                            event.sock.sendall(encode_message("turn", turn="x", move=x_moves[index] if pieces_limited and len(x_moves) >= max_pieces else None))
                         elif event.addr == o_player:
                             index = o_moves.index((row, column))
+                            event.sock.sendall(encode_message("turn", turn="o", move=o_moves[index] if pieces_limited and len(o_moves) >= max_pieces else None))
                     except ValueError:
                         index = 0
                     continue
@@ -228,7 +230,7 @@ while active:
                         index = 0
                     for conn in list(server.connections.values()):
                         if not conn["alive"]: continue
-                        conn["socket"].sendall(encode_message("turn", turn="o"))
+                        conn["socket"].sendall(encode_message("turn", turn="o", move=o_moves[index] if pieces_limited > index and len(o_moves) >= max_pieces else None))
                     info = paragraph.render(f"Player o's turn", True, (0, 0, 0))
                     info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
                     turn = o_player
@@ -243,7 +245,7 @@ while active:
                         index = 0
                     for conn in list(server.connections.values()):
                         if not conn["alive"]: continue
-                        conn["socket"].sendall(encode_message("turn", turn="x"))
+                        conn["socket"].sendall(encode_message("turn", turn="x", move=x_moves[index] if pieces_limited and len(x_moves) >= max_pieces else None))
                     info = paragraph.render(f"Player x's turn", True, (0, 0, 0))
                     info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
                     turn = x_player
@@ -306,6 +308,25 @@ while active:
     screen.blit(info, info_rect)
     screen.blit(connection_status, connection_status_rect)
     screen.blit(board, board.get_rect(center=(WIDTH // 2, HEIGHT // 2)))
+    if pieces_limited and winner is None:
+        if turn == o_player and len(o_moves) >= max_pieces:
+            row, col = o_moves[index]
+            move_rect = pygame.Rect(
+                (WIDTH - BOARD_SIZE) // 2 + col * (BOARD_SIZE // 3),
+                (HEIGHT - BOARD_SIZE) // 2 + row * (BOARD_SIZE // 3),
+                BOARD_SIZE // 3,
+                BOARD_SIZE // 3
+            )
+            pygame.draw.rect(screen, (200, 200, 255), move_rect, 3)
+        elif turn == x_player and len(x_moves) >= max_pieces:
+            row, col = x_moves[index]
+            move_rect = pygame.Rect(
+                (WIDTH - BOARD_SIZE) // 2 + col * (BOARD_SIZE // 3),
+                (HEIGHT - BOARD_SIZE) // 2 + row * (BOARD_SIZE // 3),
+                BOARD_SIZE // 3,
+                BOARD_SIZE // 3
+            )
+            pygame.draw.rect(screen, (255, 200, 200), move_rect, 3)
 
     pygame.display.flip()
 
