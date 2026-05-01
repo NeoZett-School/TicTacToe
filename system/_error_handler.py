@@ -1,3 +1,9 @@
+# This module captures unhandled exceptions and writes them to a log file instead of printing them to the console.
+# In normal cases, both stdout and stderr are redirected to log.txt, so unhandled exceptions would be logged there anyway. 
+# However, in some cases (like when running as a Windows service or when stdout/stderr are not properly redirected), 
+# unhandled exceptions might not be captured. This module ensures that all unhandled exceptions are 
+# logged to log.txt regardless of the environment. You may regard this as a failsafe.
+
 import sys
 import traceback
 from datetime import datetime
