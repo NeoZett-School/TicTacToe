@@ -47,6 +47,8 @@ def check_winner(state: str) -> str | None:
 WIDTH, HEIGHT = 800, 600
 BOARD_SIZE = 400
 VERSION = "1.0"
+PIECE_CAP = 3
+PIECE_CAP_ACTIVE = True
 pygame.display.set_caption("TicTacToe - Server")
 pygame.display.set_icon(pygame.image.load("assets/icon.png"))
 
@@ -58,12 +60,16 @@ server.start()
 
 header = pygame.font.SysFont("Georgia", 24)
 paragraph = pygame.font.SysFont("Georgia", 18)
+paragraph2 = pygame.font.SysFont("Verdana", 10)
 
 title = header.render("TicTacToe - Server", True, (0, 0, 0))
 title_rect = title.get_rect(center=(WIDTH // 2, 30))
 
 info = paragraph.render("Waiting for players...", True, (0, 0, 0))
-info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
+info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
+
+connection_status = paragraph2.render("Loading...", True, (0, 0, 0))
+connection_status_rect = connection_status.get_rect(center=(WIDTH // 2, HEIGHT - 10))
 
 board = pygame.Surface((BOARD_SIZE, BOARD_SIZE))
 board.fill((255, 255, 255))
@@ -86,8 +92,13 @@ x_image = pygame.transform.scale(x_image, (80, 80))
 o_image = pygame.image.load("assets/o.png").convert_alpha()
 o_image = pygame.transform.scale(o_image, (80, 80))
 
+o_moves = []
+x_moves = []
+
 o_player = None
 x_player = None
+
+index = 0
 
 turn = None
 
@@ -109,24 +120,31 @@ while active:
                     for conn in server.connections.values():
                         conn["socket"].sendall(encode_message("turn", turn="o"))
                     info = paragraph.render(f"Player o's turn", True, (0, 0, 0))
-                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
+                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
                 elif x_player is not None:
                     turn = x_player
                     for conn in server.connections.values():
                         conn["socket"].sendall(encode_message("turn", turn="x"))
                     info = paragraph.render(f"Player x's turn", True, (0, 0, 0))
-                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
+                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
                 else:
                     turn = None
                     info = paragraph.render(f"Waiting for players...", True, (0, 0, 0))
-                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
+                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
                 winner = None
                 board_state = [[None, None, None], [None, None, None], [None, None, None]]
                 update_requested = True
+                o_moves.clear()
+                x_moves.clear()
     
     for event in server.get_events():
-        if event.type == network.SERVER_START:
+        if event.type == network.LOADING:
+            connection_status = paragraph2.render("Starting...", True, (0, 0, 0))
+            connection_status_rect = connection_status.get_rect(center=(WIDTH // 2, HEIGHT - 10))
+        elif event.type == network.SERVER_START:
             print(f"Server started on {event.addr}")
+            connection_status = paragraph2.render(f"Address {server.address} - {player_count} player(s)", True, (0, 0, 0))
+            connection_status_rect = connection_status.get_rect(center=(WIDTH // 2, HEIGHT - 10))
         elif event.type == network.CONNECTION:
             print(f"Client connected from {event.addr}")
             event.sock.sendall(encode_message("version", version=VERSION))
@@ -140,7 +158,7 @@ while active:
                     for conn in server.connections.values():
                         conn["socket"].sendall(encode_message("turn", turn="o"))
                     info = paragraph.render(f"Player o's turn", True, (0, 0, 0))
-                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
+                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
                 event.sock.sendall(encode_message("turn", turn="o" if turn is o_player else "x"))
             elif player_count == 2:
                 x_player = event.addr
@@ -151,12 +169,14 @@ while active:
                     for conn in server.connections.values():
                         conn["socket"].sendall(encode_message("turn", turn="x"))
                     info = paragraph.render(f"Player x's turn", True, (0, 0, 0))
-                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
+                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
                 event.sock.sendall(encode_message("turn", turn="x" if turn is x_player else "o"))
                 server.can_connect = False
             else:
                 print("Too many players connected. Disconnecting client.")
                 event.sock.close()
+            connection_status = paragraph2.render(f"Address {server.address} - {player_count} player(s)", True, (0, 0, 0))
+            connection_status_rect = connection_status.get_rect(center=(WIDTH // 2, HEIGHT - 10))
             update_requested = True
         elif event.type == network.MESSAGE:
             msg_type, data = decode_message(event.data)
@@ -174,22 +194,41 @@ while active:
                 x = column * (BOARD_SIZE // 3) + (BOARD_SIZE // 6) - 40
                 y = row * (BOARD_SIZE // 3) + (BOARD_SIZE // 6) - 40
                 if board_state[row][column] is not None:
+                    try:
+                        if event.addr == x_player:
+                            index = x_moves.index((row, column))
+                        elif event.addr == o_player:
+                            index = o_moves.index((row, column))
+                    except ValueError:
+                        index = 0
                     continue
                 if event.addr == x_player:
                     board.blit(x_image, (x, y))
+                    x_moves.append((row, column))
                     board_state[row][column] = "X"
+                    if len(x_moves) > PIECE_CAP and PIECE_CAP_ACTIVE:
+                        old_row, old_col = x_moves.pop(index)
+                        board_state[old_row][old_col] = None
+                        pygame.draw.rect(board, (255, 255, 255), (old_col * (BOARD_SIZE // 3) + 20, old_row * (BOARD_SIZE // 3) + 20, (BOARD_SIZE // 3) - 40, (BOARD_SIZE // 3) - 40))
+                        index = 0
                     for conn in server.connections.values():
                         conn["socket"].sendall(encode_message("turn", turn="o"))
                     info = paragraph.render(f"Player o's turn", True, (0, 0, 0))
-                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
+                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
                     turn = o_player
                 else:
                     board.blit(o_image, (x, y))
+                    o_moves.append((row, column))
                     board_state[row][column] = "O"
+                    if len(o_moves) > PIECE_CAP and PIECE_CAP_ACTIVE:
+                        old_row, old_col = o_moves.pop(index)
+                        board_state[old_row][old_col] = None
+                        pygame.draw.rect(board, (255, 255, 255), (old_col * (BOARD_SIZE // 3) + 20, old_row * (BOARD_SIZE // 3) + 20, (BOARD_SIZE // 3) - 40, (BOARD_SIZE // 3) - 40))
+                        index = 0
                     for conn in server.connections.values():
                         conn["socket"].sendall(encode_message("turn", turn="x"))
                     info = paragraph.render(f"Player x's turn", True, (0, 0, 0))
-                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
+                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
                     turn = x_player
                 winner = check_winner(board_state)
                 if winner is not None:
@@ -204,7 +243,7 @@ while active:
                         info = paragraph.render("It's a draw!", True, (0, 0, 0))
                     else:
                         info = paragraph.render(f"Player {winner} wins!", True, (0, 0, 0))
-                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
+                    info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
                     turn = None
                 update_requested = True
             elif msg_type == "version":
@@ -223,8 +262,10 @@ while active:
                 board_state = [[None, None, None], [None, None, None], [None, None, None]]
                 update_requested = True
                 info = paragraph.render(f"Waiting for players...", True, (0, 0, 0))
-                info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
+                info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
                 turn = None
+            connection_status = paragraph2.render(f"Address {server.address} - {player_count} player(s)", True, (0, 0, 0))
+            connection_status_rect = connection_status.get_rect(center=(WIDTH // 2, HEIGHT - 10))
         elif event.type == network.SERVER_EXIT:
             print("Server is shutting down.")
             active = False
@@ -242,6 +283,7 @@ while active:
 
     screen.blit(title, title_rect)
     screen.blit(info, info_rect)
+    screen.blit(connection_status, connection_status_rect)
     screen.blit(board, board.get_rect(center=(WIDTH // 2, HEIGHT // 2)))
 
     pygame.display.flip()

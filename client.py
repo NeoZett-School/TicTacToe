@@ -36,12 +36,16 @@ with open("config.txt", "r") as f:
 
 header = pygame.font.SysFont("Georgia", 24)
 paragraph = pygame.font.SysFont("Georgia", 18)
+paragraph2 = pygame.font.SysFont("Verdana", 10)
 
 title = header.render("TicTacToe - Client", True, (0, 0, 0))
 title_rect = title.get_rect(center=(WIDTH // 2, 30))
 
 info = paragraph.render("Waiting for server...", True, (0, 0, 0))
-info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
+info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
+
+connection_status = paragraph2.render("Loading...", True, (0, 0, 0))
+connection_status_rect = connection_status.get_rect(center=(WIDTH // 2, HEIGHT - 10))
 
 name = "[Loading...]"
 
@@ -66,9 +70,14 @@ while active:
                     client.socket.sendall(encode_message("place", row=board_y, column=board_x))
 
     for event in client.get_events():
-        if event.type == network.CONNECTION:
+        if event.type == network.LOADING:
+            connection_status = paragraph2.render("Connecting...", True, (0, 0, 0))
+            connection_status_rect = connection_status.get_rect(center=(WIDTH // 2, HEIGHT - 10))
+        elif event.type == network.CONNECTION:
             print(f"Connected to server at {event.addr}")
             client.socket.sendall(encode_message("version", version=VERSION))
+            connection_status = paragraph2.render(f"This address {client.address} - Server address {client.socket.getsockname()}", True, (0, 0, 0))
+            connection_status_rect = connection_status.get_rect(center=(WIDTH // 2, HEIGHT - 10))
         elif event.type == network.MESSAGE:
             msg_type, data = decode_message(event.data)
             if msg_type == "board_update":
@@ -77,7 +86,7 @@ while active:
             elif msg_type == "turn":
                 turn = data["turn"]
                 info = paragraph.render(f"Player {turn}'s turn" if turn != name else f"It is your turn to place your '{name}'", True, (0, 0, 0))
-                info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
+                info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
             elif msg_type == "player":
                 name = data["name"]
                 title = header.render(f"TicTacToe - Player {name}", True, (0, 0, 0))
@@ -90,7 +99,7 @@ while active:
                     info = paragraph.render("Game over! You win!", True, (0, 0, 0))
                 else:
                     info = paragraph.render(f"Game over! Player {winner} wins!", True, (0, 0, 0))
-                info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 30))
+                info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
             elif msg_type == "version":
                 if data["version"] != VERSION:
                     print(f"Server has incompatible version {data['version']}. Disconnecting.")
@@ -103,6 +112,7 @@ while active:
 
     screen.blit(title, title_rect)
     screen.blit(info, info_rect)
+    screen.blit(connection_status, connection_status_rect)
     screen.blit(board, board.get_rect(center=(WIDTH // 2, HEIGHT // 2)))
 
     pygame.display.flip()
