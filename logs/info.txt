@@ -1,0 +1,2 @@
+Logs will be captured in here. In order for debugging purposes, 
+your most recent servers and clients will be captured live in this folder.
