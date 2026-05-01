@@ -5,14 +5,14 @@ import sys
 import json
 import io
 import base64
-from sys import stdout
+import sys
 
 from os import environ
 
 environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame
 
-stdout = open("logs/server_log.txt", "a")
+sys.stdout = open("logs/server_log.txt", "a")
 
 set_appid("PythonGame.TicTacToe.Client.1.0")  # Set a unique AppID for Windows taskbar grouping
 enable_traceback("logs/client_log.txt")
