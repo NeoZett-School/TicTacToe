@@ -274,6 +274,8 @@ while active:
                 info = paragraph.render(f"Waiting for players...", True, (0, 0, 0))
                 info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
                 turn = None
+                o_moves.clear()
+                x_moves.clear()
             connection_status = paragraph2.render(f"Address {server.address} - {player_count} player(s)", True, (0, 0, 0))
             connection_status_rect = connection_status.get_rect(center=(WIDTH // 2, HEIGHT - 10))
         elif event.type == network.SERVER_EXIT:
