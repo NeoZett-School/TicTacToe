@@ -117,13 +117,13 @@ while active:
                 board.blit(board_image, (0, 0))
                 if o_player is not None:
                     turn = o_player
-                    for conn in server.connections.values():
+                    for conn in server.connections.values()[::]:
                         conn["socket"].sendall(encode_message("turn", turn="o"))
                     info = paragraph.render(f"Player o's turn", True, (0, 0, 0))
                     info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
                 elif x_player is not None:
                     turn = x_player
-                    for conn in server.connections.values():
+                    for conn in server.connections.values()[::]:
                         conn["socket"].sendall(encode_message("turn", turn="x"))
                     info = paragraph.render(f"Player x's turn", True, (0, 0, 0))
                     info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
@@ -155,7 +155,7 @@ while active:
                 print("Assigned O to player.")
                 if turn is None:
                     turn = o_player
-                    for conn in server.connections.values():
+                    for conn in server.connections.values()[::]:
                         conn["socket"].sendall(encode_message("turn", turn="o"))
                     info = paragraph.render(f"Player o's turn", True, (0, 0, 0))
                     info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
@@ -166,7 +166,7 @@ while active:
                 print("Assigned X to player.")
                 if turn is None:
                     turn = x_player
-                    for conn in server.connections.values():
+                    for conn in server.connections.values()[::]:
                         conn["socket"].sendall(encode_message("turn", turn="x"))
                     info = paragraph.render(f"Player x's turn", True, (0, 0, 0))
                     info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
@@ -211,7 +211,7 @@ while active:
                         board_state[old_row][old_col] = None
                         pygame.draw.rect(board, (255, 255, 255), (old_col * (BOARD_SIZE // 3) + 20, old_row * (BOARD_SIZE // 3) + 20, (BOARD_SIZE // 3) - 40, (BOARD_SIZE // 3) - 40))
                         index = 0
-                    for conn in server.connections.values():
+                    for conn in server.connections.values()[::]:
                         conn["socket"].sendall(encode_message("turn", turn="o"))
                     info = paragraph.render(f"Player o's turn", True, (0, 0, 0))
                     info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
@@ -225,14 +225,14 @@ while active:
                         board_state[old_row][old_col] = None
                         pygame.draw.rect(board, (255, 255, 255), (old_col * (BOARD_SIZE // 3) + 20, old_row * (BOARD_SIZE // 3) + 20, (BOARD_SIZE // 3) - 40, (BOARD_SIZE // 3) - 40))
                         index = 0
-                    for conn in server.connections.values():
+                    for conn in server.connections.values()[::]:
                         conn["socket"].sendall(encode_message("turn", turn="x"))
                     info = paragraph.render(f"Player x's turn", True, (0, 0, 0))
                     info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
                     turn = x_player
                 winner = check_winner(board_state)
                 if winner is not None:
-                    for conn in server.connections.values():
+                    for conn in server.connections.values()[::]:
                         conn["socket"].sendall(encode_message("game_over", winner=winner))
 
                     board.fill((255, 255, 255))
@@ -275,7 +275,7 @@ while active:
         pygame.image.save(board, buffer, "PNG")
         data = buffer.getvalue()
         content_b64 = base64.b64encode(data).decode('ascii')
-        for conn in server.connections.values():
+        for conn in server.connections.values()[::]:
             conn["socket"].sendall(encode_message("board_update", content=content_b64))
         update_requested = False
     
