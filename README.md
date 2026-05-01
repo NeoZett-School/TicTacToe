@@ -1,5 +1,5 @@
 # TicTacToe
-A TicTacToe game, made in pygame over a network in python.
+A TicTacToe game, made in python, pygame. It works over a network using sockets.
 
 In order to start a game, initiate a server by opening the 'server.bat' file. 
 
