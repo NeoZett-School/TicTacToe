@@ -332,7 +332,7 @@ while active:
 
 server.socket.close()
 
-with open("server_log.txt", "a") as f:
+with open("logs/server_log.txt", "a") as f:
     f.write("\n--- SERVER EXITED NORMALLY ---\n")
 
 pygame.quit()
