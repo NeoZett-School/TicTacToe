@@ -49,8 +49,10 @@ class Event:
     @property
     def type_name(self: Self) -> str: ...
 
-def pack(data: bytes) -> bytes: ...
-def unpack(buffer: bytearray) -> Generator[bytes, Any, None]: ...
+def pack(data: bytes) -> bytes: 
+    """Packs the given data into a format suitable for sending over a network."""
+def unpack(buffer: bytearray) -> Generator[bytes, Any, None]: 
+    """Unpacks the given buffer into individual messages that can be processed by the application."""
 
 class Server:
     """The Server class represents a server that listens for incoming connections and handles them in separate threads."""

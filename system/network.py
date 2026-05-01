@@ -47,17 +47,17 @@ def pack(data):
 def unpack(buffer):
     while True:
         if len(buffer) < 4:
-            break  # not enough for length
+            break
 
         length = struct.unpack("!I", buffer[:4])[0]
 
         if len(buffer) < 4 + length:
-            break  # not enough data yet
+            break
 
         message = buffer[4:4+length]
         yield bytes(message)
 
-        del buffer[:4+length]  # remove processed message
+        del buffer[:4+length]
 
 class Server:
     __slots__ = (
