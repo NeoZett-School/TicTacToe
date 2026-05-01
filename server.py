@@ -151,7 +151,7 @@ while active:
             print(f"Client connected from {event.addr}")
             event.sock.sendall(encode_message("version", version=VERSION))
             player_count += 1
-            if player_count == 1 or (player_count == 2 and o_player is None):
+            if player_count == 1 or (player_count == 2 and not o_player in server.connections):
                 o_player = event.addr
                 event.sock.sendall(encode_message("player", name="o"))
                 print("Assigned O to player.")
