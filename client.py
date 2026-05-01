@@ -1,3 +1,4 @@
+from _appid import set_appid
 import network
 import socket
 import sys
@@ -5,22 +6,12 @@ import json
 import io
 import base64
 
-import ctypes
-import os
-
-# Create a unique ID for your app (Format: CompanyName.ProductName.SubProduct.Version)
-myappid = 'MyCompany.TicTacToe.Client.1.0' 
-
-try:
-    # This informs Windows that this process has a specific AppID
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-except Exception as e:
-    print(f"AppID could not be set: {e}")
-
 from os import environ
 
 environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame
+
+set_appid("PythonGame.TicTacToe.Client.1.0")  # Set a unique AppID for Windows taskbar grouping
 
 pygame.init()
 
@@ -41,7 +32,8 @@ VERSION = "1.0"
 pygame.display.set_caption("TicTacToe - Client")
 pygame.display.set_icon(pygame.image.load("assets/icon.png"))
 
-config = json.load(open("config.json"))
+config = json.load(open("client_config.json"))
+
 client = network.Client(host=config["host"], port=config["port"])
 client.connect()
 

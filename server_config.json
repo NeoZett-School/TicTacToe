@@ -1,0 +1,5 @@
+{
+    "port": 5000,
+    "max_pieces": 3,
+    "pieces_limited": true
+}

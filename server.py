@@ -1,3 +1,4 @@
+from _appid import set_appid
 import network
 import socket
 import sys
@@ -5,22 +6,12 @@ import json
 import io
 import base64
 
-import ctypes
-import os
-
-# Create a unique ID for your app (Format: CompanyName.ProductName.SubProduct.Version)
-myappid = 'MyCompany.TicTacToe.Client.1.0' 
-
-try:
-    # This informs Windows that this process has a specific AppID
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-except Exception as e:
-    print(f"AppID could not be set: {e}")
-
 from os import environ
 
 environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame
+
+set_appid("PythonGame.TicTacToe.Server.1.0")  # Set a unique AppID for Windows taskbar grouping
 
 pygame.init()
 
@@ -56,18 +47,21 @@ def check_winner(state: str) -> str | None:
             
     return "Draw"
 
+config = json.load(open("server_config.json"))
+
 WIDTH, HEIGHT = 800, 600
 PORT = 5000
 BOARD_SIZE = 400
 VERSION = "1.0"
-PIECE_CAP = 3
-PIECE_CAP_ACTIVE = True
 pygame.display.set_caption("TicTacToe - Server")
 pygame.display.set_icon(pygame.image.load("assets/icon.png"))
 
-server = network.Server(port=5000)
-json.dump({"host": socket.gethostbyname(socket.gethostname()), "port": PORT}, open("config.json", "w"), separators=(",", ":"))
-print("Starting server... Remember to share the config.json file with your clients so they can connect!")
+max_pieces = config.get("max_pieces", 3)
+pieces_limited = config.get("pieces_limited", True)
+
+server = network.Server(port=config["port"])
+json.dump({"host": socket.gethostbyname(socket.gethostname()), "port": PORT}, open("client_config.json", "w"), separators=(",", ":"))
+print("Starting server... Remember to share the client_config.json file with your clients so they can connect!")
 server.start()
 
 header = pygame.font.SysFont("Georgia", 24)
@@ -225,7 +219,7 @@ while active:
                     board.blit(x_image, (x, y))
                     x_moves.append((row, column))
                     board_state[row][column] = "X"
-                    if len(x_moves) > PIECE_CAP and PIECE_CAP_ACTIVE:
+                    if len(x_moves) > max_pieces and pieces_limited:
                         old_row, old_col = x_moves.pop(index)
                         board_state[old_row][old_col] = None
                         pygame.draw.rect(board, (255, 255, 255), (old_col * (BOARD_SIZE // 3) + 20, old_row * (BOARD_SIZE // 3) + 20, (BOARD_SIZE // 3) - 40, (BOARD_SIZE // 3) - 40))
@@ -240,7 +234,7 @@ while active:
                     board.blit(o_image, (x, y))
                     o_moves.append((row, column))
                     board_state[row][column] = "O"
-                    if len(o_moves) > PIECE_CAP and PIECE_CAP_ACTIVE:
+                    if len(o_moves) > max_pieces and pieces_limited:
                         old_row, old_col = o_moves.pop(index)
                         board_state[old_row][old_col] = None
                         pygame.draw.rect(board, (255, 255, 255), (old_col * (BOARD_SIZE // 3) + 20, old_row * (BOARD_SIZE // 3) + 20, (BOARD_SIZE // 3) - 40, (BOARD_SIZE // 3) - 40))
