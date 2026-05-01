@@ -87,7 +87,7 @@ class Server:
         try:
             while True:
                 if not self.can_connect:
-                    time.sleep(0.1)
+                    time.sleep(1.0) # Wait one second until checking again to avoid busy waiting
                     continue
                 client_socket, address = self.socket.accept()
                 _events.put(Event(type=CONNECTION, addr=address, sock=client_socket))
@@ -95,7 +95,8 @@ class Server:
                 self.connections[address] = {
                     "thread": client_thread,
                     "socket": client_socket,
-                    "buffer": bytearray()
+                    "buffer": bytearray(),
+                    "alive": True
                 }
                 client_thread.start()
         except Exception as e:
@@ -107,11 +108,12 @@ class Server:
 
         try:
             with client_socket:
-                while True:
+                while self.connections[address]["alive"]:
                     try:
                         chunk = client_socket.recv(self.bufsize)
 
                         if not chunk:
+                            self.connections[address]["alive"] = False
                             break  # connection closed properly
 
                         buffer.extend(chunk)
@@ -125,9 +127,11 @@ class Server:
                             ))
                     except ConnectionResetError:
                         _events.put(Event(type=CONNECTION_RESET, addr=address, sock=client_socket))
+                        self.connections[address]["alive"] = False
                         break
                     except Exception as e:
                         _events.put(Event(type=EXCEPTION, addr=address, sock=client_socket, data=e))
+                        self.connections[address]["alive"] = False
                         break
         finally:
             del self.connections[address]
