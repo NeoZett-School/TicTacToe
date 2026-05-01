@@ -6,11 +6,14 @@ import sys
 import json
 import io
 import base64
+from sys import stdout
 
 from os import environ
 
 environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame
+
+stdout = open("logs/server_log.txt", "a")
 
 set_appid("PythonGame.TicTacToe.Server.1.0")  # Set a unique AppID for Windows taskbar grouping
 enable_traceback("logs/server_log.txt")
@@ -96,9 +99,9 @@ board_image = pygame.transform.scale(board_image, (BOARD_SIZE, BOARD_SIZE))
 board.blit(board_image, (0, 0))
 
 x_image = pygame.image.load("assets/x.png").convert_alpha()
-x_image = pygame.transform.scale(x_image, (80, 80))
+x_image = pygame.transform.smoothscale(x_image, (80, 80))
 o_image = pygame.image.load("assets/o.png").convert_alpha()
-o_image = pygame.transform.scale(o_image, (80, 80))
+o_image = pygame.transform.smoothscale(o_image, (80, 80))
 
 o_moves = []
 x_moves = []
