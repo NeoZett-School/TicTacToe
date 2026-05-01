@@ -12,10 +12,14 @@ from os import environ
 environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame
 
-sys.stdout = open("logs/server_log.txt", "a")
+log_file = "logs/client_log.txt"
+
+log = open(log_file, "a", buffering = 1)
+sys.stdout = log
+sys.stderr = log
 
 set_appid("PythonGame.TicTacToe.Client.1.0")  # Set a unique AppID for Windows taskbar grouping
-enable_traceback("logs/client_log.txt")
+enable_traceback(log_file)
 
 pygame.init()
 
@@ -140,7 +144,7 @@ while active:
 
 client.socket.close()
 
-with open("logs/client_log.txt", "a") as f:
+with open(log_file, "a") as f:
     f.write("\n--- CLIENT EXITED NORMALLY ---\n")
 
 pygame.quit()
