@@ -1,6 +1,6 @@
-from _appid import set_appid
-from _error_handler import enable_traceback
-import network
+from system._appid import set_appid
+from system._error_handler import enable_traceback
+import system.network as network
 import socket
 import sys
 import json
@@ -13,7 +13,7 @@ environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame
 
 set_appid("PythonGame.TicTacToe.Server.1.0")  # Set a unique AppID for Windows taskbar grouping
-enable_traceback("server_log.txt")
+enable_traceback("logs/server_log.txt")
 
 pygame.init()
 

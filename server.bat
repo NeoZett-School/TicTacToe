@@ -2,7 +2,7 @@
 title TicTacToe Server Launcher
 setlocal EnableDelayedExpansion
 
-set "LOG_FILE=server_log.txt"
+set "LOG_FILE=logs/server_log.txt"
 echo --- Launch Log: %date% %time% --- > "%LOG_FILE%"
 
 set "VENV_DIR=.venv"
