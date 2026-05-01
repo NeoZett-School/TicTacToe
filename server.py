@@ -155,7 +155,7 @@ while active:
                 o_player = event.addr
                 event.sock.sendall(encode_message("player", name="o"))
                 print("Assigned O to player.")
-                if turn is None:
+                if turn is None or not turn in server.connections:
                     turn = o_player
                     for conn in list(server.connections.values()):
                         if not conn["alive"]: continue
@@ -167,7 +167,7 @@ while active:
                 x_player = event.addr
                 event.sock.sendall(encode_message("player", name="x"))
                 print("Assigned X to player.")
-                if turn is None:
+                if turn is None or not turn in server.connections:
                     turn = x_player
                     for conn in list(server.connections.values()):
                         if not conn["alive"]: continue
@@ -186,6 +186,9 @@ while active:
             msg_type, data = decode_message(event.data)
             if msg_type == "place":
                 if turn not in (o_player, x_player):
+                    turn = None
+                    continue
+                if not turn in server.connections:
                     turn = None
                     continue
                 if turn != event.addr:
