@@ -1,5 +1,5 @@
-from system._appid import set_appid
-from system._error_handler import enable_traceback
+from system.appid import set_appid
+from system.error_handler import enable_traceback
 import system.network as network
 import sys
 import json
