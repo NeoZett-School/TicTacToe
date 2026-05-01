@@ -124,5 +124,8 @@ while active:
 
 client.socket.close()
 
+with open("client_log.txt", "a") as f:
+    f.write("\n--- CLIENT EXITED NORMALLY ---\n")
+
 pygame.quit()
 sys.exit()

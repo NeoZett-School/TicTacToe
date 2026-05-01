@@ -1,5 +1,6 @@
 client_config.json
-log.txt
+server_log.txt
+client_log.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
