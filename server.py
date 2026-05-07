@@ -127,6 +127,7 @@ turn = None
 winner = None
 win_time = 0
 
+global_win_update = False
 server_win_update = False
 
 active = True
@@ -161,6 +162,7 @@ while active:
                 winner = None
                 board_state = [[None, None, None], [None, None, None], [None, None, None]]
                 update_requested = True
+                global_win_update = False
                 o_moves.clear()
                 x_moves.clear()
     
@@ -336,6 +338,7 @@ while active:
                 info = paragraph.render(f"Waiting for players...", True, (0, 0, 0))
                 info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
                 turn = None
+                global_win_update = False
                 o_moves.clear()
                 x_moves.clear()
             connection_status = paragraph2.render(f"Address {server.address} - {player_count} player(s)", True, (0, 0, 0))
@@ -345,7 +348,7 @@ while active:
             active = False
     
     now = perf_counter()
-    if winner is not None and now - win_time >= 5.0:
+    if winner is not None and now - win_time >= 5.0 and not global_win_update:
         for conn in list(server.connections.values()):
             if not conn["alive"]: continue
             conn["socket"].sendall(encode_message("game_over", winner=winner))
@@ -357,6 +360,7 @@ while active:
         turn = None
         update_requested = True
         server_win_update = True
+        global_win_update = True
     
     if update_requested:
         buffer = io.BytesIO()
