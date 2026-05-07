@@ -102,14 +102,17 @@ player_count = 0
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 
-board_image = pygame.image.load("assets/board.png").convert_alpha()
+board_image = pygame.image.load("assets/images/board.png").convert_alpha()
 board_image = pygame.transform.scale(board_image, (BOARD_SIZE, BOARD_SIZE))
 board.blit(board_image, (0, 0))
 
-x_image = pygame.image.load("assets/x.png").convert_alpha()
+x_image = pygame.image.load("assets/images/x.png").convert_alpha()
 x_image = pygame.transform.smoothscale(x_image, (80, 80))
-o_image = pygame.image.load("assets/o.png").convert_alpha()
+o_image = pygame.image.load("assets/images/o.png").convert_alpha()
 o_image = pygame.transform.smoothscale(o_image, (80, 80))
+
+place_sound = pygame.mixer.Sound("assets/sounds/placing.mp3")
+win_sound = pygame.mixer.Sound("assets/sounds/win.mp3")
 
 o_moves = []
 x_moves = []
@@ -313,6 +316,7 @@ while active:
                     info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
                     
                     win_time = perf_counter()
+                place_sound.play()
                 update_requested = True
             elif msg_type == "version":
                 if data["version"] != VERSION:
@@ -368,6 +372,7 @@ while active:
         board.fill((255, 255, 255))
         text = paragraph.render("Game over! Press space to restart.", True, (0, 0, 0))
         board.blit(text, text.get_rect(center=(BOARD_SIZE // 2, BOARD_SIZE // 2)))
+        win_sound.play()
         server_win_update = False
     
     screen.fill((255, 255, 255))

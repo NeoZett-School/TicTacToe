@@ -61,6 +61,9 @@ info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
 connection_status = paragraph2.render("Loading...", True, (0, 0, 0))
 connection_status_rect = connection_status.get_rect(center=(WIDTH // 2, HEIGHT - 10))
 
+place_sound = pygame.mixer.Sound("assets/sounds/placing.mp3")
+win_sound = pygame.mixer.Sound("assets/sounds/win.mp3")
+
 name = "[Loading...]"
 move = None
 
@@ -83,6 +86,7 @@ while active:
                 board_y = (mouse_y - (HEIGHT - BOARD_SIZE) // 2) // (BOARD_SIZE // 3)
                 if 0 <= board_x < 3 and 0 <= board_y < 3:
                     client.socket.sendall(encode_message("place", row=board_y, column=board_x))
+                place_sound.play()
 
     for event in client.get_events():
         if event.type == network.LOADING:
@@ -120,6 +124,7 @@ while active:
                     info = paragraph.render(f"Game over! Player {winner} wins!", True, (0, 0, 0))
                 info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
                 move = None
+                win_sound.play()
             elif msg_type == "calculating":
                 info = paragraph.render(f"Calculating... please wait...", True, (0, 0, 0))
                 info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
