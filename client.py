@@ -120,6 +120,10 @@ while active:
                     info = paragraph.render(f"Game over! Player {winner} wins!", True, (0, 0, 0))
                 info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
                 move = None
+            elif msg_type == "calculating":
+                info = paragraph.render(f"Calculating... please wait...", True, (0, 0, 0))
+                info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
+                move = None
             elif msg_type == "version":
                 if data["version"] != VERSION:
                     print(f"Server has incompatible version {data['version']}. Disconnecting.", flush=True)

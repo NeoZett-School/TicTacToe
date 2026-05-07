@@ -1,5 +1,6 @@
 from system.appid import set_appid
 from system.error_handler import enable_traceback
+from time import perf_counter
 import system.network as network
 import socket
 import sys
@@ -121,6 +122,9 @@ index = 0
 turn = None
 
 winner = None
+win_time = 0
+
+server_win_update = False
 
 active = True
 while active:
@@ -211,6 +215,8 @@ while active:
                     continue
                 if turn != event.addr:
                     continue
+                if winner is not None:
+                    continue
                 row, column = data["row"], data["column"]
                 if not (isinstance(row, int) and isinstance(column, int)):
                     continue
@@ -263,18 +269,50 @@ while active:
                 if winner is not None:
                     for conn in list(server.connections.values()):
                         if not conn["alive"]: continue
-                        conn["socket"].sendall(encode_message("game_over", winner=winner))
+                        conn["socket"].sendall(encode_message("calculating"))
 
-                    board.fill((255, 255, 255))
-                    text = paragraph.render("Game over! Server press space to restart.", True, (0, 0, 0))
-                    board.blit(text, text.get_rect(center=(BOARD_SIZE // 2, BOARD_SIZE // 2)))
+                    for i in range(3):
+                        if board_state[i][0] == board_state[i][1] == board_state[i][2] and board_state[i][0] is not None:
+                            pygame.draw.lines(
+                                board,
+                                (200, 200, 255) if winner == "O" else (255, 200, 200),
+                                False,
+                                [(j * (BOARD_SIZE // 3) + (BOARD_SIZE // 6), i * (BOARD_SIZE // 3) + (BOARD_SIZE // 6)) for j in range(3)],
+                                3
+                            )
+                        if board_state[0][i] == board_state[1][i] == board_state[2][i] and board_state[0][i] is not None:
+                            pygame.draw.lines(
+                                board,
+                                (200, 200, 255) if winner == "O" else (255, 200, 200),
+                                False,
+                                [(i * (BOARD_SIZE // 3) + (BOARD_SIZE // 6), j * (BOARD_SIZE // 3) + (BOARD_SIZE // 6)) for j in range(3)],
+                                3
+                            )
 
+                    if board_state[0][0] == board_state[1][1] == board_state[2][2] and board_state[0][0] is not None:
+                        pygame.draw.lines(
+                            board,
+                            (200, 200, 255) if winner == "O" else (255, 200, 200),
+                            False,
+                            [(i * (BOARD_SIZE // 3) + (BOARD_SIZE // 6), i * (BOARD_SIZE // 3) + (BOARD_SIZE // 6)) for i in range(3)],
+                            3
+                        )
+                    if board_state[0][2] == board_state[1][1] == board_state[2][0] and board_state[0][2] is not None:
+                        pygame.draw.lines(
+                            board,
+                            (200, 200, 255) if winner == "O" else (255, 200, 200),
+                            False,
+                            [((2 - i) * (BOARD_SIZE // 3) + (BOARD_SIZE // 6), i * (BOARD_SIZE // 3) + (BOARD_SIZE // 6)) for i in range(3)],
+                            3
+                        )
+                    
                     if winner == "Draw":
                         info = paragraph.render("It's a draw!", True, (0, 0, 0))
                     else:
                         info = paragraph.render(f"Player {winner} wins!", True, (0, 0, 0))
                     info_rect = info.get_rect(center=(WIDTH // 2, HEIGHT - 40))
-                    turn = None
+                    
+                    win_time = perf_counter()
                 update_requested = True
             elif msg_type == "version":
                 if data["version"] != VERSION:
@@ -302,6 +340,20 @@ while active:
             print("Server is shutting down.", flush=True)
             active = False
     
+    now = perf_counter()
+    if winner is not None and now - win_time >= 5.0:
+        for conn in list(server.connections.values()):
+            if not conn["alive"]: continue
+            conn["socket"].sendall(encode_message("game_over", winner=winner))
+
+        board.fill((255, 255, 255))
+        text = paragraph.render("Server press space to restart.", True, (0, 0, 0))
+        board.blit(text, text.get_rect(center=(BOARD_SIZE // 2, BOARD_SIZE // 2)))
+
+        turn = None
+        update_requested = True
+        server_win_update = True
+    
     if update_requested:
         buffer = io.BytesIO()
         pygame.image.save(board, buffer, "PNG")
@@ -311,6 +363,12 @@ while active:
             if not conn["alive"]: continue
             conn["socket"].sendall(encode_message("board_update", content=content_b64))
         update_requested = False
+    
+    if server_win_update == True:
+        board.fill((255, 255, 255))
+        text = paragraph.render("Game over! Press space to restart.", True, (0, 0, 0))
+        board.blit(text, text.get_rect(center=(BOARD_SIZE // 2, BOARD_SIZE // 2)))
+        server_win_update = False
     
     screen.fill((255, 255, 255))
 
