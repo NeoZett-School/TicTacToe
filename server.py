@@ -368,12 +368,12 @@ while active:
             conn["socket"].sendall(encode_message("board_update", content=content_b64))
         update_requested = False
     
-    if server_win_update == True:
+    if server_win_update:
+        server_win_update = False
         board.fill((255, 255, 255))
         text = paragraph.render("Game over! Press space to restart.", True, (0, 0, 0))
         board.blit(text, text.get_rect(center=(BOARD_SIZE // 2, BOARD_SIZE // 2)))
         win_sound.play()
-        server_win_update = False
     
     screen.fill((255, 255, 255))
 
